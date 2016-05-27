@@ -43,8 +43,9 @@ class Slug
      */
     public static function generate($string, $replace = [], $delimiter = '-')
     {
+        $intlLoaded = true;
         if (!extension_loaded('intl')) {
-            throw new Exception('intl module not loaded');
+            $intlLoaded = false;
         }
 
         // Save the old locale and set the new locale to UTF-8
@@ -57,10 +58,11 @@ class Slug
             $string = str_replace(array_keys($replace), array_values($replace), $string);
         }
 
-        $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII');
-        $string = $transliterator->transliterate(
-            mb_convert_encoding(htmlspecialchars_decode($string), 'UTF-8', 'auto')
-        );
+        $string = mb_convert_encoding(htmlspecialchars_decode($string), 'UTF-8', 'auto');
+        if ($intlLoaded) {
+            $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII');
+            $string = $transliterator->transliterate($string);
+        }
 
         // replace non letter or non digits by -
         $string = preg_replace('#[^\pL\d]+#u', '-', $string);
